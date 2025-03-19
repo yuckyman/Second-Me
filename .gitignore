@@ -43,8 +43,6 @@ resources/L1/processed_data/objective/*
 resources/L1/graphrag_indexing_output/report/*
 resources/L1/graphrag_indexing_output/subjective/*
 
-lpm_kernel/L2/data_pipeline/graphrag_indexing/settings.yaml
-lpm_kernel/L2/data_pipeline/graphrag_indexing/.env
 
 resources/raw_content/*
 !resources/raw_content/.gitkeep
