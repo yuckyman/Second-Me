@@ -126,7 +126,8 @@ Using make:
 ```bash
 make help
 ```
-
+## Tutorial
+- Feel free to follow [User tutorial](https://second-me.gitbook.io/a-new-ai-species-making-we-matter-again) to build your Second Me.
 
 
 ## Coming Soon 🚀
