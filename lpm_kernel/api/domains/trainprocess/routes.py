@@ -1,10 +1,9 @@
 import json
 import logging
-import queue
 import time
 from pathlib import Path
 
-from flask import Blueprint, jsonify, Response, stream_with_context, request
+from flask import Blueprint, jsonify, Response, request
 
 from lpm_kernel.file_data.trainprocess_service import TrainProcessService
 from .progress import Status
@@ -12,20 +11,9 @@ from ...common.responses import APIResponse
 
 trainprocess_bp = Blueprint("trainprocess", __name__, url_prefix="/api/trainprocess")
 
-# Queue for storing progress of each training process
-progress_queues = {}
 
-
-def create_progress_queue():
-    """Create a new progress queue and return its ID"""
-    q = queue.Queue()
-    queue_id = str(len(progress_queues))
-    progress_queues[queue_id] = q
-    return queue_id, q
-
-
-def progress_callback(queue, progress_update):
-    """Progress callback function"""
+def progress_callback(progress_update):
+    """Progress callback function to update training progress"""
     if not isinstance(progress_update, dict):
         return
 
@@ -42,16 +30,8 @@ def progress_callback(queue, progress_update):
 
         if stage and step:
             progress.update_progress(stage, step, status, prog)
-
-        # Send update to queue
-        queue.put(progress.to_dict())
-
-        # If all steps are completed, send completion flag
-        if progress.status == Status.COMPLETED:
-            queue.put({"completed": True})
     except Exception as e:
         logging.error(f"Progress callback error: {str(e)}")
-        queue.put({"error": str(e)})
 
 
 def clear_specific_logs():
@@ -104,19 +84,15 @@ def start_process():
     """
     logging.info("Training process starting...")  # Log the startup
     try:
-        # get request parameters
         data = request.get_json()
         if not data or "model_name" not in data:
-            return jsonify(APIResponse.error(message="miss necessary parameter: model_name", code=400))
+            return jsonify(APIResponse.error(message="Missing required parameters"))
 
         model_name = data["model_name"]
 
-        # create progress queue
-        queue_id, q = create_progress_queue()
-
         # Create service instance, pass in progress callback and model name
         train_service = TrainProcessService(
-            progress_callback=lambda p: progress_callback(q, p),
+            progress_callback=progress_callback,
             model_name=model_name
         )
 
@@ -130,7 +106,6 @@ def start_process():
         return jsonify(
             APIResponse.success(
                 data={
-                    "progress_id": queue_id,
                     "model_name": model_name
                 }
             )
@@ -179,7 +154,7 @@ def stream_logs():
             time.sleep(1)  # Check for new logs every second
 
     return Response(
-        stream_with_context(generate_logs()),
+        generate_logs(),
         mimetype='text/event-stream',
         headers={
             'Cache-Control': 'no-cache, no-transform',
@@ -187,45 +162,6 @@ def stream_logs():
             'Connection': 'keep-alive',
             'Transfer-Encoding': 'chunked'
         }
-    )
-
-
-@trainprocess_bp.route("/progress/stream/<progress_id>", methods=["GET"])
-def stream_progress(progress_id):
-    """
-    Get real-time progress stream
-
-    Args:
-        progress_id: Progress stream ID
-
-    Returns:
-        Response: SSE stream, sends a new event with each progress update
-    """
-
-    def generate():
-        if progress_id not in progress_queues:
-            yield f"data: {json.dumps({'error': 'invalid progress ID'})}\n\n"
-            return
-
-        q = progress_queues[progress_id]
-
-        while True:
-            try:
-                # Wait for new progress data
-                progress = q.get(timeout=30)  # 30 seconds timeout
-                yield f"data: {json.dumps({'progress': progress})}\n\n"
-            except queue.Empty:
-                # Timeout, send heartbeat
-                # Send heartbeat
-                yield f"data: {json.dumps({'heartbeat': True})}\n\n"
-            except Exception as e:
-                yield f"data: {json.dumps({'error': str(e)})}\n\n"
-                break
-
-    return Response(
-        stream_with_context(generate()),
-        mimetype="text/event-stream",
-        headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
     )
 
 
@@ -372,12 +308,9 @@ def retrain():
         # Save progress
         train_service.progress._save_progress()
         
-        # create progress queue
-        queue_id, q = create_progress_queue()
-        
         # Create new service instance, pass in progress callback and model name
         train_service = TrainProcessService(
-            progress_callback=lambda p: progress_callback(q, p),
+            progress_callback=progress_callback,
             model_name=model_name
         )
         
@@ -392,7 +325,6 @@ def retrain():
             APIResponse.success(
                 message="Successfully reset progress to data processing stage and started training process",
                 data={
-                    "progress_id": queue_id,
                     "model_name": model_name
                 }
             )
