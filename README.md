@@ -126,8 +126,15 @@ Using make:
 ```bash
 make help
 ```
-## Tutorial
-- Feel free to follow [User tutorial](https://second-me.gitbook.io/a-new-ai-species-making-we-matter-again) to build your Second Me.
+## Tutorial and Use Cases
+🛠️ Feel free to follow [User tutorial](https://second-me.gitbook.io/a-new-ai-species-making-we-matter-again) to build your Second Me.
+
+
+💡 Check out the links below to see how Second Me can be used in real-life scenarios:
+- [Felix AMA (Roleplay app)](https://app.secondme.io/example/ama)
+- [Brainstorming a 15-Day European City Itinerary (Network app)](https://app.secondme.io/example/brainstorming)
+- [Icebreaking as a Speed Dating Match (Network app)](https://app.secondme.io/example/Icebreaker)
+
 
 
 ## Coming Soon 🚀
