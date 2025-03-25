@@ -411,13 +411,33 @@ class DocumentService:
             # get embeddings from ChromaDB
             embeddings = {}
             if chunk_ids:
-                results = self.embedding_service.chunk_collection.get(
-                    ids=chunk_ids, include=["embeddings", "documents"]
-                )
+                try:
+                    results = self.embedding_service.chunk_collection.get(
+                        ids=chunk_ids, include=["embeddings", "documents"]
+                    )
 
-                # transfer chunk_id -> embedding
-                for i, chunk_id in enumerate(results["ids"]):
-                    embeddings[int(chunk_id)] = results["embeddings"][i]
+                    # transfer chunk_id -> embedding
+                    for i, chunk_id in enumerate(results["ids"]):
+                        embeddings[int(chunk_id)] = results["embeddings"][i]
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to get embeddings from ChromaDB for document {document_id}: {str(e)}"
+                    )
+                    # Generate embeddings for chunks that don't have them
+                    unprocessed_chunks = [chunk for chunk in chunks if not chunk.has_embedding]
+                    if unprocessed_chunks:
+                        try:
+                            processed_chunks = self.embedding_service.generate_chunk_embeddings(unprocessed_chunks)
+                            # Try to get embeddings again after generation
+                            results = self.embedding_service.chunk_collection.get(
+                                ids=chunk_ids, include=["embeddings", "documents"]
+                            )
+                            for i, chunk_id in enumerate(results["ids"]):
+                                embeddings[int(chunk_id)] = results["embeddings"][i]
+                        except Exception as gen_err:
+                            logger.error(
+                                f"Failed to generate embeddings for document {document_id}: {str(gen_err)}"
+                            )
 
             return embeddings
 

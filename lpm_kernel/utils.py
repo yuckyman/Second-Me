@@ -44,7 +44,11 @@ def cal_upperbound(
     :param raw: system prompt and raw content
     :return:
     """
-    enc = tiktoken.encoding_for_model(model_name)
+    try:
+        enc = tiktoken.encoding_for_model(model_name)
+    except KeyError:
+        # If the model name is not supported, use the default encoding
+        enc = tiktoken.get_encoding("cl100k_base")
     raw_token = len(enc.encode(raw))
     upper_bound = model_limit - raw_token - tolerance - generage_limit
     if upper_bound < 0:
@@ -116,7 +120,14 @@ class TokenTextSplitter(TextSplitter):
             )
         # create a GPT-3 encoder instance
         if model_name is not None:
-            enc = tiktoken.encoding_for_model(model_name)
+            try:
+                # Handle ollama model names by extracting base model name
+                if ":" in model_name:
+                    model_name = model_name.split(":")[0]  # Get base model name
+                enc = tiktoken.encoding_for_model(model_name)
+            except KeyError:
+                # If the model name is not supported, use the default encoding
+                enc = tiktoken.get_encoding(encoding_name)
         else:
             enc = tiktoken.get_encoding(encoding_name)
         self._tokenizer = enc
@@ -204,7 +215,11 @@ def chunk_filter(
 
 
 def get_safe_content_turncate(content, model_name="gpt-3.5-turbo", max_tokens=3300):
-    enc = tiktoken.encoding_for_model(model_name)
+    try:
+        enc = tiktoken.encoding_for_model(model_name)
+    except KeyError:
+        # If the model name is not supported, use the default encoding
+        enc = tiktoken.get_encoding("cl100k_base")
     logging.warning(
         "get_safe_content_turncate(): current model maximum input length is %s, current input length is %s",
         max_tokens,
@@ -313,8 +328,8 @@ class TokenParagraphSplitter(TextSplitter):
         ("[", "]"),
         ("{", "}"),
         ("<", ">"),
-        ("“", "”"),
-        ("‘", "’"),
+        (""", """),
+        ("'", "'"),
         ("《", "》"),
         ("【", "】"),
     ]

@@ -19,29 +19,29 @@ extract_graph:
   model_id: default_chat_model
   prompt: prompts/extract_graph.txt
 input:
-  base_dir: /your_dir
+  base_dir: /Users/ian/Cursor/Second-Me/resources/L1/processed_data/subjective
   file_encoding: utf-8
   file_pattern: .*\.txt$$
   file_type: text
   type: file
 models:
   default_chat_model:
-    api_base: https://api.openai.com/v1
-    api_key: sk-xxxxxx
+    api_base: http://localhost:11434/v1/
+    api_key: AAAAC3NzaC1lZDI1NTE5AAAAIGOw4pElFJYbCr1mz/ccXjme7HeRg+swHCm0gN419nFB
     async_mode: threaded
     auth_type: api_key
     concurrent_requests: 2
+    encoding_model: cl100k_base
     max_retries: -1
-    model: gpt-4o-mini
+    model: llama3.2:latest
     model_supports_json: true
     requests_per_minute: 0
     retry_strategy: native
     tokens_per_minute: 0
     type: openai_chat
-    encoding_model: cl100k_base
   default_embedding_model:
-    api_base: https://api.openai.com/v1
-    api_key: sk-xxxxxx
+    api_base: http://localhost:11434/v1
+    api_key: AAAAC3NzaC1lZDI1NTE5AAAAIGOw4pElFJYbCr1mz/ccXjme7HeRg+swHCm0gN419nFB
     async_mode: threaded
     auth_type: api_key
     concurrent_requests: 2
@@ -53,10 +53,10 @@ models:
     tokens_per_minute: 0
     type: openai_embedding
 output:
-  base_dir: /your_dir
+  base_dir: /Users/ian/Cursor/Second-Me/resources/L1/graphrag_indexing_output/subjective
   type: file
 reporting:
-  base_dir: /your_dir
+  base_dir: /Users/ian/Cursor/Second-Me/resources/L1/graphrag_indexing_output/subjective/../report
   type: file
 snapshots:
   embeddings: false

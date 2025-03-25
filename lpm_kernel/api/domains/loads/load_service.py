@@ -350,10 +350,11 @@ class LoadService:
 
     @staticmethod
     def _clear_vector_database() -> None:
-        """Clear ChromaDB vector database collections"""
+        """Clear ChromaDB vector database collections and reinitialize them"""
         try:
             import chromadb
             import os
+            from lpm_kernel.file_data.embedding_service import EmbeddingService
             
             # Get ChromaDB path
             chroma_path = os.getenv("CHROMA_PERSIST_DIRECTORY", "./data/chroma_db")
@@ -361,38 +362,56 @@ class LoadService:
             # Create ChromaDB client
             client = chromadb.PersistentClient(path=chroma_path)
             
-            # Get document-level collection and clear content
+            # Delete document-level collection
             try:
-                documents_collection = client.get_collection(name="documents")
-                # Get all document IDs
-                all_docs = documents_collection.get()
-                if all_docs and len(all_docs['ids']) > 0:
-                    documents_collection.delete(ids=all_docs['ids'])
-                    logger.info(f"Successfully deleted {len(all_docs['ids'])} documents from 'documents' collection")
-                else:
-                    logger.info("No documents found in 'documents' collection")
+                client.delete_collection(name="documents")
+                logger.info("Successfully deleted 'documents' collection")
             except ValueError as e:
                 logger.info(f"Collection 'documents' does not exist: {str(e)}")
             except Exception as e:
-                logger.error(f"Error clearing 'documents' collection: {str(e)}")
+                logger.error(f"Error deleting 'documents' collection: {str(e)}")
             
-            # Get chunk-level collection and clear content
+            # Delete chunk-level collection
             try:
-                chunks_collection = client.get_collection(name="document_chunks")
-                # Get all chunk IDs
-                all_chunks = chunks_collection.get()
-                if all_chunks and len(all_chunks['ids']) > 0:
-                    chunks_collection.delete(ids=all_chunks['ids'])
-                    logger.info(f"Successfully deleted {len(all_chunks['ids'])} chunks from 'document_chunks' collection")
-                else:
-                    logger.info("No chunks found in 'document_chunks' collection")
+                client.delete_collection(name="document_chunks")
+                logger.info("Successfully deleted 'document_chunks' collection")
             except ValueError as e:
                 logger.info(f"Collection 'document_chunks' does not exist: {str(e)}")
             except Exception as e:
-                logger.error(f"Error clearing 'document_chunks' collection: {str(e)}")
+                logger.error(f"Error deleting 'document_chunks' collection: {str(e)}")
+            
+            # Reinitialize collections
+            try:
+                # Create document-level collection
+                client.create_collection(
+                    name="documents",
+                    metadata={
+                        "hnsw:space": "cosine",
+                        "dimension": 1536
+                    }
+                )
+                logger.info("Successfully reinitialized 'documents' collection")
+                
+                # Create chunk-level collection
+                client.create_collection(
+                    name="document_chunks",
+                    metadata={
+                        "hnsw:space": "cosine",
+                        "dimension": 1536
+                    }
+                )
+                logger.info("Successfully reinitialized 'document_chunks' collection")
+                
+                # Reset embedding service to use new collections
+                from lpm_kernel.file_data.document_service import document_service
+                document_service.embedding_service = EmbeddingService()
+                logger.info("Successfully reset embedding service")
+                
+            except Exception as e:
+                logger.error(f"Error reinitializing collections: {str(e)}")
             
         except Exception as e:
-            logger.error(f"Failed to clear ChromaDB collections: {str(e)}")
+            logger.error(f"Failed to clear and reinitialize ChromaDB collections: {str(e)}")
 
     @staticmethod
     def _clean_data_directories() -> None:
