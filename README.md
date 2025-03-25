@@ -154,6 +154,10 @@ If you encounter issues, check:
 - [Brainstorming a 15-Day European City Itinerary (Network app)](https://app.secondme.io/example/brainstorming)
 - [Icebreaking as a Speed Dating Match (Network app)](https://app.secondme.io/example/Icebreaker)
 
+## Join the Community
+- [Discord](https://discord.com/invite/GpWHQNUwrg)
+- [Reddit](https://www.reddit.com/r/SecondMeAI/)
+- [X](https://x.com/SecondMe_AI1)
 
 ## Coming Soon 
 
@@ -188,7 +192,7 @@ Made with [contrib.rocks](https://contrib.rocks).
 
 ## Acknowledgements
 
-This work leverages the power of the open source community. 
+This work leverages the power of the open-source community. 
 
 For data synthesis, we utilized [GraphRAG](https://github.com/microsoft/graphrag) from Microsoft.
 
