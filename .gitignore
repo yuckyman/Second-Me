@@ -71,3 +71,8 @@ run/*
 #config
 .backend.pid
 .frontend.pid
+
+# Sensitive files
+resources/database.db
+*/.env
+.env
